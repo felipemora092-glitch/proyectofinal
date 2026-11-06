@@ -48,6 +48,9 @@ public class ColaDeIngesta {
      * @return true si se encolo, false si se descarto
      */
     public boolean encolar(LecturaSensor lectura) {
+        if (lectura == null) {
+            throw new IllegalArgumentException("La lectura no puede ser null");
+        }
         if (cantidad == CAPACIDAD) {
             descartadas++;
             return false;
