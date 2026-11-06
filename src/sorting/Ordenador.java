@@ -164,17 +164,27 @@ public class Ordenador {
     }
 
     /**
-     * QuickSort con el PRIMER elemento como pivote.
-     *
-     * TODO 2: este metodo funciona muy bien con datos desordenados
-     * y hace explotar el programa con los datos reales de la red.
-     * Ejecuta el experimento 4 antes de leer mas.
-     *
-     * Cuando entiendas por que, corrigelo eligiendo mejor el pivote.
+     * QuickSort con pivote aleatorio. Elegir el pivote al azar reduce
+     * el riesgo de particiones muy desequilibradas cuando los datos ya
+     * vienen ordenados o casi ordenados.
      */
-    public static void quickSortPivotePrimero(LecturaSensor[] datos) {
+    public static void quickSortPivoteAleatorio(LecturaSensor[] datos) {
         reiniciarContadores();
+        if (datos == null) {
+            throw new IllegalArgumentException("El arreglo no puede ser null");
+        }
         quickRecursivo(datos, 0, datos.length - 1);
+    }
+
+    /**
+     * Alias de compatibilidad con el nombre utilizado en versiones
+     * anteriores. La implementación actual utiliza pivote aleatorio.
+     *
+     * @deprecated usar quickSortPivoteAleatorio
+     */
+    @Deprecated
+    public static void quickSortPivotePrimero(LecturaSensor[] datos) {
+        quickSortPivoteAleatorio(datos);
     }
 
     private static java.util.Random random = new java.util.Random();
