@@ -70,6 +70,7 @@ public class ColaDeAlertas {
             if (cantidad == 0) return null;
             Alerta mayor = datos[0];
             for (int i = 0; i < cantidad - 1; i++) datos[i] = datos[i + 1];
+            datos[cantidad - 1] = null;
             cantidad--;
             return mayor;
         }
