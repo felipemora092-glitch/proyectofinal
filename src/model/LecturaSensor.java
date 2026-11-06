@@ -44,9 +44,8 @@ public class LecturaSensor implements Serializable {
      * @throws IllegalStateException si el timestamp no tiene un formato válido
      */
     public int getHora() {
-        if (timestamp == null || timestamp.length() < 13
-                || timestamp.charAt(10) != ' '
-                || timestamp.charAt(13 - 1) < '0') {
+        if (timestamp == null
+                || !timestamp.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}(:\\d{2})?")) {
             throw new IllegalStateException("Timestamp inválido: " + timestamp);
         }
 
