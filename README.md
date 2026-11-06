@@ -12,7 +12,7 @@ Este repositorio contiene la solución completa del proyecto integrado que se de
 | 4 | Algoritmos de ordenamiento | `Ordenador`, `BancoDeOrdenamiento` |
 | 5 | Listas enlazadas y doblemente enlazadas | `Nodo`, `RepositorioEnlazado`, `HistorialNavegable`, `BancoDeListas` |
 | 6 | Pilas, Colas y Montículos | `PilaDeAcciones`, `ColaDeIngesta`, `ColaDeAlertas`, `Alerta`, `BancoDeFlujo` |
-| 7 | Java Collections Framework (JCF) | `RepositorioColeccion`, `BancoDeColecciones` |
+| 7 | Java Collections Framework (JCF) | `RepositorioColeccion`, `BancoDeColecciones`, `GestorDeRed` |
 
 ## Arquitectura y flujo
 
@@ -32,6 +32,7 @@ Este repositorio contiene la solución completa del proyecto integrado que se de
 4. **Ordenamiento** (`Ordenador`):
    - Implementaciones de Bubble‑Sort (con corte temprano), Selection‑Sort, Insertion‑Sort, Merge‑Sort, Quick‑Sort (pivote aleatorio) y Heap‑Sort.
    - Contadores de comparaciones e intercambios para medir coste.
+   - `quickSortPivoteAleatorio` es el método recomendado; `quickSortPivotePrimero` se conserva como alias de compatibilidad.
 5. **Listas enlazadas** (`RepositorioEnlazado`, `HistorialNavegable`):
    - Inserción/ eliminación en O(1) o O(n) según caso.
    - `HistorialNavegable` permite navegación hacia adelante y atrás con un cursor, usado por la UI de control.
@@ -43,22 +44,28 @@ Este repositorio contiene la solución completa del proyecto integrado que se de
    - Implementación de repositorios usando `List` del JCF.
    - Análisis de rendimiento entre `ArrayList` y `LinkedList`.
    - Uso de `Comparator` para ordenamientos personalizados y estables.
+   - `GestorDeRed` integra `List`, `Deque`, `Queue` y `Map` para resolver los diez retos de la guía.
 
 ## Cómo compilar y ejecutar
 
-```bash
-# Desde la raíz del proyecto
-javac -d out src/**/*.java test/*.java
+El proyecto utiliza Maven y Java 17. Desde la raíz del repositorio:
 
-# Ejecutar la aplicación principal (ingesta completa)
-java -cp out ingest.IngestaSensores
+```bash
+# Ejecutar todas las pruebas unitarias
+mvn test
+
+# Empaquetar el proyecto
+mvn package
+
+# Ejecutar la aplicación principal
+java -cp target/classes ingest.IngestaSensores
 ```
 
-> **Requisitos**: el archivo `data/lecturas_ampliadas.csv` debe estar presente.
+> **Requisitos**: tener instalado JDK 17 o superior y Maven 3.8 o superior. El archivo `data/lecturas_ampliadas.csv` debe estar presente.
 
 ## Ejecutar experimentos por semana
 
-- **Semana 3**: `java experiment.BancoDePruebas` (ejecuta los experimentos de búsqueda).
+- **Semana 3**: los experimentos de búsqueda se ejecutan desde `ingest.IngestaSensores`; `BancoDePruebas` no tiene un método `main` independiente.
 - **Semana 4**: `java experiment.BancoDeOrdenamiento` (prueba los algoritmos de ordenamiento).
 - **Semana 5**: `java experiment.BancoDeListas` (compara arreglo vs lista enlazada y prueba la lista doble).
 - **Semana 6**: `java experiment.BancoDeFlujo` (prueba pila, cola circular y cola de prioridad).
@@ -77,14 +84,14 @@ El proyecto incluye un conjunto completo de pruebas unitarias bajo `test/` que c
 
 Ejecutar todas las pruebas con JUnit:
 ```bash
-java -jar lib/junit-platform-console-standalone-1.10.2.jar \
-    --class-path out \
-    --scan-class-path
+mvn test
 ```
 
 ## Decisiones de diseño (ver `docs/decisiones.md`)
 
 - Uso de la interfaz `Repositorio` para aislar la lógica de la aplicación del mecanismo de almacenamiento.
+- Uso de `ArrayDeque` para `Deque` y `Queue`, y `HashMap` para la lista de adyacencia del grafo en `GestorDeRed`.
+- Uso de `ArrayList` para el historial de eventos y las listas de vecinos.
 - Implementación de **pivote aleatorio** en Quick‑Sort para evitar `StackOverflowError` con datos ya ordenados.
 - Añadido de un puntero `ultimo` en la lista enlazada para `agregarAlFinal` O(1).
 - Introducción de la lista doble (`HistorialNavegable`) para navegación bidireccional en la UI.
@@ -94,5 +101,4 @@ java -jar lib/junit-platform-console-standalone-1.10.2.jar \
 
 ---
 
-**Autor**: José Alvaro Rodríguez Botero (Claude Fable 5) 
-**Fecha**: Oct 2026
+**Proyecto académico** — Módulo Integrador de Estructuras de Datos.
