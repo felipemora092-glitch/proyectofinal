@@ -66,10 +66,10 @@ java -cp target/classes ingest.IngestaSensores
 ## Ejecutar experimentos por semana
 
 - **Semana 3**: los experimentos de búsqueda se ejecutan desde `ingest.IngestaSensores`; `BancoDePruebas` no tiene un método `main` independiente.
-- **Semana 4**: `java experiment.BancoDeOrdenamiento` (prueba los algoritmos de ordenamiento).
-- **Semana 5**: `java experiment.BancoDeListas` (compara arreglo vs lista enlazada y prueba la lista doble).
-- **Semana 6**: `java experiment.BancoDeFlujo` (prueba pila, cola circular y cola de prioridad).
-- **Semana 7**: `java experiment.BancoDeColecciones` (compara implementaciones del JCF).
+- **Semana 4**: `java -cp target/classes experiment.BancoDeOrdenamiento` (prueba los algoritmos de ordenamiento).
+- **Semana 5**: `java -cp target/classes experiment.BancoDeListas` (compara arreglo vs lista enlazada y prueba la lista doble).
+- **Semana 6**: `java -cp target/classes experiment.BancoDeFlujo` (prueba pila, cola circular y cola de prioridad).
+- **Semana 7**: `java -cp target/classes experiment.BancoDeColecciones` (compara implementaciones del JCF).
 
 ## Tests
 
