@@ -40,6 +40,10 @@ public class ColaDeAlertas {
         public int tamano() { return cantidad; }
 
         public void encolar(Alerta alerta) {
+            if (alerta == null) {
+                throw new IllegalArgumentException("La alerta no puede ser null");
+            }
+            asegurarCapacidad();
             int i = cantidad - 1;
             while (i >= 0) {
                 comparaciones++;
@@ -52,6 +56,14 @@ public class ColaDeAlertas {
             }
             datos[i + 1] = alerta;
             cantidad++;
+        }
+
+        private void asegurarCapacidad() {
+            if (cantidad == datos.length) {
+                Alerta[] nuevo = new Alerta[datos.length * 2];
+                System.arraycopy(datos, 0, nuevo, 0, cantidad);
+                datos = nuevo;
+            }
         }
 
         public Alerta atender() {
@@ -106,6 +118,10 @@ public class ColaDeAlertas {
          * urgente que el.
          */
         public void encolar(Alerta alerta) {
+            if (alerta == null) {
+                throw new IllegalArgumentException("La alerta no puede ser null");
+            }
+            asegurarCapacidad();
             datos[cantidad] = alerta;
             cantidad++;
             flotar(cantidad - 1);
@@ -127,6 +143,14 @@ public class ColaDeAlertas {
          * Atiende la alerta mas urgente: saca la raiz, sube la ultima
          * al tope y la deja HUNDIRSE hasta su lugar.
          */
+        private void asegurarCapacidad() {
+            if (cantidad == datos.length) {
+                Alerta[] nuevo = new Alerta[datos.length * 2];
+                System.arraycopy(datos, 0, nuevo, 0, cantidad);
+                datos = nuevo;
+            }
+        }
+
         public Alerta atender() {
             if (cantidad == 0) return null;
             Alerta masUrgente = datos[0];
