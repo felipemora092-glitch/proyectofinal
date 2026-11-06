@@ -28,6 +28,29 @@ public class AnalizadorMatrizTest {
     }
 
     @Test
+    public void testReportesRepetidosDeUnaEstacionSePromedian() {
+        AnalizadorMatriz am = new AnalizadorMatriz();
+        am.registrar(new LecturaSensor("EST-001", "2026-01-01 05:00", 20, 50, 10));
+        am.registrar(new LecturaSensor("EST-001", "2026-01-01 05:00", 20, 50, 30));
+        am.registrar(new LecturaSensor("EST-002", "2026-01-01 05:00", 20, 50, 40));
+
+        assertEquals(30.0, am.promedioDeHora(5), 0.0001);
+    }
+
+    @Test
+    public void testHoraSinDatosRetornaNaNYNoSeSeleccionaComoMaxima() {
+        AnalizadorMatriz am = new AnalizadorMatriz();
+        assertTrue(Double.isNaN(am.promedioDeHora(5)));
+        assertEquals(-1, am.horaMasContaminada());
+    }
+
+    @Test
+    public void testHoraFueraDeRangoLanzaExcepcion() {
+        AnalizadorMatriz am = new AnalizadorMatriz();
+        assertThrows(IndexOutOfBoundsException.class, () -> am.promedioDeHora(24));
+    }
+
+    @Test
     public void testHoraMasContaminada() {
         AnalizadorMatriz am = new AnalizadorMatriz();
         // Hour 8 gets high values, hour 9 gets low values
