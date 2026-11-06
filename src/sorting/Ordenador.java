@@ -56,10 +56,8 @@ public class Ordenador {
     /**
      * Ordenamiento burbuja.
      *
-     * TODO 1: este metodo hace el mismo trabajo aunque el arreglo
-     * ya venga ordenado. Agregale una bandera que detecte que en
-     * una pasada completa no hubo ningun intercambio, y corte ahi.
-     * Mide el antes y el despues con datos ya ordenados.
+     * Usa una bandera para detenerse si una pasada completa no produce
+     * intercambios. Así evita trabajo innecesario cuando ya está ordenado.
      */
     public static void burbuja(LecturaSensor[] datos) {
         reiniciarContadores();
@@ -247,8 +245,9 @@ public class Ordenador {
      * Ordena las lecturas por concentracion de PM2.5, de menor a mayor.
      * Sirve para construir el ranking de estaciones mas contaminadas.
      *
-     * TODO 3: este metodo hace exactamente lo que promete.
-     * Ejecuta el experimento 5 y averigua que rompe.
+     * Advertencia: después de ordenar por PM2.5, el arreglo deja de estar
+     * ordenado por timestamp. Por eso ya no se puede aplicar búsqueda
+     * binaria por timestamp hasta restaurar ese orden.
      */
     public static void ordenarPorPm25(LecturaSensor[] datos) {
         reiniciarContadores();
