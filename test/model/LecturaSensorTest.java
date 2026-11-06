@@ -27,6 +27,23 @@ public class LecturaSensorTest {
     }
 
     @Test
+    public void testEsValidaRechazaNaNEInfinitos() {
+        LecturaSensor nan = new LecturaSensor("EST-001", "2026-03-02 07:15",
+                Double.NaN, 50.0, 30.0);
+        LecturaSensor infinito = new LecturaSensor("EST-001", "2026-03-02 07:15",
+                20.0, 50.0, Double.POSITIVE_INFINITY);
+        assertFalse(nan.esValida());
+        assertFalse(infinito.esValida());
+    }
+
+    @Test
+    public void testGetHoraRechazaTimestampMalFormado() {
+        LecturaSensor lectura = new LecturaSensor("EST-001", "fecha-invalida",
+                20.0, 50.0, 30.0);
+        assertThrows(IllegalStateException.class, lectura::getHora);
+    }
+
+    @Test
     public void testToStringFormat() {
         LecturaSensor ls = new LecturaSensor("EST-001", "2026-03-02 07:15", 20.0, 50.0, 30.0);
         String expected = "EST-001 | 2026-03-02 07:15 | T=20.0 | H=50.0 | PM=30.0";
