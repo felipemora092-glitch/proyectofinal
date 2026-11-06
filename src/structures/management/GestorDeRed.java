@@ -1,145 +1,289 @@
 package structures.management;
 
 import model.LecturaSensor;
-import java.util.*;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 /**
- * GestorDeRed - Módulo Integrador de Estructuras de Datos
- * VERSION ESTUDIANTE
+ * Gestor de las estructuras de datos del módulo integrador.
  *
- * Objetivo: Implementar la gestión de la red utilizando las colecciones de Java (JCF).
- * El éxito de este módulo no es solo que el código compile, sino que elijas
- * la estructura correcta para cada problema.
+ * Incluye historial de eventos, navegación circular de alertas,
+ * planificación FIFO de sensores, topología de red y buffer de ingesta.
  */
 public class GestorDeRed {
-    // 1. Historial de Eventos: Registro lineal de todas las actividades
-    private List<String> historialEventos;
 
-    // 2. Navegador de Alertas: Permite moverse adelante y atrás entre alertas
-    private Deque<String> navegadorAlertas;
+    private static final DateTimeFormatter FORMATO_FECHA =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    // 1. Historial cronológico de eventos.
+    private final List<String> historialEventos;
+
+    // 2. Navegación circular de alertas. El elemento del frente es el actual.
+    private final Deque<String> navegadorAlertas;
     private String alertaActual;
 
-    // 3. Ciclo de Monitoreo: Gestión de la rotación de sensores a consultar
-    private Queue<String> colaMonitoreo;
+    // 3. Cola FIFO de sensores programados.
+    private final Queue<String> colaMonitoreo;
 
-    // 4. Topología de la Red: Grafo de conexiones entre estaciones (Lista de adyacencia)
-    private Map<String, List<String>> topologiaRed;
+    // 4. Grafo no dirigido representado mediante listas de adyacencia.
+    private final Map<String, List<String>> topologiaRed;
 
-    // 5. Buffer de Ingesta: Cola de espera para procesar lecturas entrantes
-    private Queue<LecturaSensor> bufferIngesta;
+    // 5. Buffer FIFO de lecturas entrantes.
+    private final Queue<LecturaSensor> bufferIngesta;
 
     public GestorDeRed() {
-        // TODO: Inicializa las colecciones usando las implementaciones más adecuadas de Java
-        // (ArrayList, ArrayDeque, HashMap, etc.)
         this.historialEventos = new ArrayList<>();
         this.navegadorAlertas = new ArrayDeque<>();
         this.colaMonitoreo = new ArrayDeque<>();
         this.topologiaRed = new HashMap<>();
         this.bufferIngesta = new ArrayDeque<>();
+        this.alertaActual = null;
     }
 
     // =========================================================================
     // SECCIÓN 1: HISTORIAL Y EVENTOS
     // =========================================================================
 
+    /**
+     * Registra un evento con la fecha y hora actuales.
+     */
     public void agregarEvento(String evento) {
-        // TODO 1: Implementar la adición del evento al historial.
-        // Debe registrarse la fecha/hora actual junto con la descripción del evento.
-        // Ejemplo: "[2026-10-24 10:00] Sensor EST-01 activado"
+        if (evento == null || evento.isBlank()) {
+            throw new IllegalArgumentException("El evento no puede estar vacío");
+        }
+
+        String fechaHora = LocalDateTime.now().format(FORMATO_FECHA);
+        historialEventos.add("[" + fechaHora + "] " + evento);
     }
 
+    /**
+     * Devuelve una copia de los últimos eventos, sin exponer la lista interna.
+     */
     public List<String> obtenerEventosRecientes(int limite) {
-        if (historialEventos.size() <= limite) return new ArrayList<>(historialEventos);
-        return historialEventos.subList(historialEventos.size() - limite, historialEventos.size());
+        if (limite <= 0 || historialEventos.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        int inicio = Math.max(0, historialEventos.size() - limite);
+        return new ArrayList<>(historialEventos.subList(inicio, historialEventos.size()));
     }
 
+    /**
+     * Conserva únicamente los últimos 'mantener' eventos.
+     */
     public void limpiarHistorialAntiguo(int mantener) {
-        // TODO 10: Implementar la optimización del historial.
-        // Eliminar los registros más antiguos para mantener solo los últimos 'mantener' eventos.
+        if (mantener < 0) {
+            throw new IllegalArgumentException("El límite no puede ser negativo");
+        }
+
+        while (historialEventos.size() > mantener) {
+            historialEventos.remove(0);
+        }
     }
 
     // =========================================================================
-    // SECCIÓN 2: NAVEGACIÓN DE ALERTAS
+    // SECCIÓN 2: NAVEGACIÓN CIRCULAR DE ALERTAS
     // =========================================================================
 
+    /**
+     * Agrega una alerta y la deja seleccionada como alerta actual.
+     */
     public void registrarAlerta(String alerta) {
+        validarTexto(alerta, "La alerta");
+
         navegadorAlertas.addLast(alerta);
-        alertaActual = alerta;
+
+        // Se rota la deque hasta dejar la alerta recién agregada al frente.
+        // Así el frente representa siempre la alerta actual.
+        int rotaciones = navegadorAlertas.size() - 1;
+        for (int i = 0; i < rotaciones; i++) {
+            navegadorAlertas.addLast(navegadorAlertas.removeFirst());
+        }
+
+        alertaActual = navegadorAlertas.peekFirst();
     }
 
+    /**
+     * Avanza a la siguiente alerta. La navegación es circular.
+     * Retorna null si no hay alertas registradas.
+     */
     public String navegarAlSiguiente() {
-        // TODO 2: Implementar la lógica de desplazamiento hacia adelante.
-        // Debe devolver la siguiente alerta o null si no hay más.
-        // Recuerda actualizar el estado de 'alertaActual'.
-        return null;
+        if (navegadorAlertas.isEmpty()) {
+            alertaActual = null;
+            return null;
+        }
+
+        if (navegadorAlertas.size() > 1) {
+            navegadorAlertas.addLast(navegadorAlertas.removeFirst());
+        }
+
+        alertaActual = navegadorAlertas.peekFirst();
+        return alertaActual;
     }
 
+    /**
+     * Retrocede a la alerta anterior. La navegación es circular.
+     * Retorna null si no hay alertas registradas.
+     */
     public String navegarAlAnterior() {
-        // TODO 3: Implementar la lógica de desplazamiento hacia atrás.
-        // Debe devolver la alerta anterior o null si es la primera.
-        // Recuerda actualizar el estado de 'alertaActual'.
-        return null;
+        if (navegadorAlertas.isEmpty()) {
+            alertaActual = null;
+            return null;
+        }
+
+        if (navegadorAlertas.size() > 1) {
+            navegadorAlertas.addFirst(navegadorAlertas.removeLast());
+        }
+
+        alertaActual = navegadorAlertas.peekFirst();
+        return alertaActual;
     }
 
-    public String getAlertaActual() { return alertaActual; }
+    public String getAlertaActual() {
+        return alertaActual;
+    }
 
     // =========================================================================
     // SECCIÓN 3: CICLO DE MONITOREO
     // =========================================================================
 
+    /**
+     * Programa un sensor una sola vez dentro de la cola de monitoreo.
+     */
     public void programarConsulta(String idSensor) {
-        // TODO 4: Implementar la programación de la consulta.
-        // El sensor debe agregarse a la cola solo si NO está ya programado.
+        validarTexto(idSensor, "El identificador del sensor");
+
+        if (!colaMonitoreo.contains(idSensor)) {
+            colaMonitoreo.offer(idSensor);
+        }
     }
 
+    /**
+     * Atiende el sensor del frente y lo vuelve a ubicar al final para
+     * mantener la rotación continua. Retorna null si la cola está vacía.
+     */
     public String obtenerSiguienteSensor() {
-        // TODO 5: Implementar la rotación del ciclo.
-        // Debe extraer el sensor del frente de la cola y volverlo a insertar al final
-        // para garantizar que todos los sensores sean consultados continuamente.
-        return null;
+        String siguiente = colaMonitoreo.poll();
+
+        if (siguiente != null) {
+            colaMonitoreo.offer(siguiente);
+        }
+
+        return siguiente;
     }
 
     // =========================================================================
     // SECCIÓN 4: TOPOLOGÍA DE RED
     // =========================================================================
 
+    /**
+     * Registra un sensor aunque todavía no tenga conexiones.
+     * Es necesario para poder identificar estaciones aisladas.
+     */
+    public void registrarSensor(String idSensor) {
+        validarTexto(idSensor, "El identificador del sensor");
+        topologiaRed.computeIfAbsent(idSensor, clave -> new ArrayList<>());
+    }
+
+    /**
+     * Registra una conexión bidireccional sin duplicar vecinos.
+     */
     public void registrarConexion(String sensorA, String sensorB) {
-        // TODO 6: Implementar la conexión bidireccional entre dos sensores.
-        // Debe agregar sensorB a la lista de vecinos de sensorA, y viceversa.
-        // Asegurar que no se creen conexiones duplicadas.
+        validarTexto(sensorA, "El identificador del primer sensor");
+        validarTexto(sensorB, "El identificador del segundo sensor");
+
+        List<String> vecinosA =
+                topologiaRed.computeIfAbsent(sensorA, clave -> new ArrayList<>());
+        List<String> vecinosB =
+                topologiaRed.computeIfAbsent(sensorB, clave -> new ArrayList<>());
+
+        if (Objects.equals(sensorA, sensorB)) {
+            return;
+        }
+
+        if (!vecinosA.contains(sensorB)) {
+            vecinosA.add(sensorB);
+        }
+
+        if (!vecinosB.contains(sensorA)) {
+            vecinosB.add(sensorA);
+        }
     }
 
+    /**
+     * Retorna los vecinos de un sensor. Si no existe, retorna una lista vacía.
+     * Se entrega una copia para proteger la topología interna.
+     */
     public List<String> obtenerVecinos(String idSensor) {
-        // TODO 7: Implementar la consulta de conexiones.
-        // Debe devolver la lista de sensores conectados al idSensor proporcionado.
-        // Retornar una lista vacía si el sensor no tiene conexiones.
-        return null;
+        if (idSensor == null) {
+            return new ArrayList<>();
+        }
+
+        List<String> vecinos = topologiaRed.get(idSensor);
+        return vecinos == null ? new ArrayList<>() : new ArrayList<>(vecinos);
     }
 
+    /**
+     * Retorna todos los sensores registrados que no tienen vecinos.
+     */
     public List<String> detectarEstacionesAisladas() {
-        // TODO 9: Implementar la detección de nodos huérfanos.
-        // Debe retornar una lista de todos los sensores registrados que no tienen ninguna conexión.
-        return null;
+        return topologiaRed.entrySet().stream()
+                .filter(entrada -> entrada.getValue().isEmpty())
+                .map(Map.Entry::getKey)
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     // =========================================================================
     // SECCIÓN 5: BUFFER DE INGESTA
     // =========================================================================
 
+    /**
+     * Agrega una lectura al final del buffer FIFO.
+     */
     public void recibirLectura(LecturaSensor lectura) {
-        bufferIngesta.add(lectura);
+        if (lectura == null) {
+            throw new IllegalArgumentException("La lectura no puede ser null");
+        }
+
+        bufferIngesta.offer(lectura);
     }
 
+    /**
+     * Procesa y devuelve la lectura más antigua del buffer.
+     * Retorna null cuando no hay lecturas pendientes.
+     */
     public LecturaSensor procesarSiguienteLectura() {
-        // TODO 8: Implementar la extracción del buffer.
-        // Debe remover y devolver la lectura más antigua del buffer (FIFO).
-        return null;
+        return bufferIngesta.poll();
     }
 
+    /**
+     * Filtra las lecturas pendientes cuyo PM2.5 supera el límite indicado.
+     * No elimina ni modifica las lecturas del buffer.
+     */
     public List<LecturaSensor> filtrarAlertasCriticas(double limitePm25) {
-        // TODO EXTRA: Usar Streams para filtrar lecturas con PM2.5 superior al límite.
-        // Debe retornar una lista con las lecturas filtradas.
-        return null;
+        if (!Double.isFinite(limitePm25)) {
+            throw new IllegalArgumentException("El límite PM2.5 debe ser un número finito");
+        }
+
+        return bufferIngesta.stream()
+                .filter(lectura -> lectura.getPm25() > limitePm25)
+                .collect(Collectors.toList());
+    }
+
+    private void validarTexto(String valor, String campo) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalArgumentException(campo + " no puede estar vacío");
+        }
     }
 }
