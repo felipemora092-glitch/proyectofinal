@@ -3,12 +3,13 @@ package structures.management;
 import model.LecturaSensor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
-import structures.management.GestorDeRed;
 
-import java.util.*;
+class TestGestorDeRed {
 
-public class TestGestorDeRed {
     private GestorDeRed gestor;
 
     @BeforeEach
@@ -17,80 +18,99 @@ public class TestGestorDeRed {
     }
 
     @Test
-    void testAgregarEvento_DebeRegistrarEvento() {
+    void historialRegistraFechaYEvento() {
         gestor.agregarEvento("Sensor EST-01 activo");
-        // Este test fallará hasta que el TODO 1 sea implementado
-        assertNotNull(gestor.obtenerEventosRecientes(1), "El historial no debería estar vacío");
+
+        List<String> eventos = gestor.obtenerEventosRecientes(1);
+        assertEquals(1, eventos.size());
+        assertTrue(eventos.get(0).contains("Sensor EST-01 activo"));
+        assertTrue(eventos.get(0).startsWith("["));
     }
 
     @Test
-    void testNavegacionAlertas_DebeMoverseAdelanteYAtraves() {
+    void historialConservaSoloLosEventosMasRecientes() {
+        for (int i = 0; i < 5; i++) {
+            gestor.agregarEvento("Evento " + i);
+        }
+
+        gestor.limpiarHistorialAntiguo(2);
+        List<String> eventos = gestor.obtenerEventosRecientes(10);
+
+        assertEquals(2, eventos.size());
+        assertTrue(eventos.get(0).contains("Evento 3"));
+        assertTrue(eventos.get(1).contains("Evento 4"));
+    }
+
+    @Test
+    void navegadorPermiteAvanzarYRetrocederDeFormaCircular() {
         gestor.registrarAlerta("Alerta A");
         gestor.registrarAlerta("Alerta B");
         gestor.registrarAlerta("Alerta C");
 
-        // Simulamos que el cursor está en A
-        // Nota: la implementación real debe manejar el índice del cursor
-        String siguiente = gestor.navegarAlSiguiente();
-        assertNotNull(siguiente, "Debería poder navegar al siguiente");
-
-        String anterior = gestor.navegarAlAnterior();
-        assertNotNull(anterior, "Debería poder volver al anterior");
+        assertEquals("Alerta A", gestor.getAlertaActual());
+        assertEquals("Alerta B", gestor.navegarAlSiguiente());
+        assertEquals("Alerta C", gestor.navegarAlSiguiente());
+        assertEquals("Alerta A", gestor.navegarAlSiguiente());
+        assertEquals("Alerta C", gestor.navegarAlAnterior());
+        assertEquals("Alerta C", gestor.getAlertaActual());
     }
 
     @Test
-    void testCicloMonitoreo_DebeRotarSensores() {
+    void navegadorVacioRetornaNull() {
+        assertNull(gestor.navegarAlSiguiente());
+        assertNull(gestor.navegarAlAnterior());
+    }
+
+    @Test
+    void cicloMonitoreoEvitaDuplicadosYRotaSensores() {
         gestor.programarConsulta("S1");
         gestor.programarConsulta("S2");
+        gestor.programarConsulta("S1");
 
-        String primero = gestor.obtenerSiguienteSensor();
-        assertEquals("S1", primero);
-
-        String segundo = gestor.obtenerSiguienteSensor();
-        assertEquals("S2", segundo);
-
-        String rotacion = gestor.obtenerSiguienteSensor();
-        assertEquals("S1", rotacion, "El ciclo debe volver al sensor S1");
+        assertEquals("S1", gestor.obtenerSiguienteSensor());
+        assertEquals("S2", gestor.obtenerSiguienteSensor());
+        assertEquals("S1", gestor.obtenerSiguienteSensor());
     }
 
     @Test
-    void testTopologia_DebeRegistrarConexiones() {
+    void topologiaRegistraConexionBidireccionalSinDuplicados() {
         gestor.registrarConexion("S1", "S2");
-        List<String> vecinosS1 = gestor.obtenerVecinos("S1");
-        List<String> vecinosS2 = gestor.obtenerVecinos("S2");
-
-        assertNotNull(vecinosS1);
-        assertTrue(vecinosS1.contains("S2"));
-        assertNotNull(vecinosS2);
-        assertTrue(vecinosS2.contains("S1"));
-    }
-
-    @Test
-    void testEstacionesAisladas_DebeDetectarHuerfanos() {
         gestor.registrarConexion("S1", "S2");
-        // S3 no se conecta a nadie
-        // Nota: necesitamos que el gestor sepa de la existencia de S3
-        // Para este test, asumimos que el gestor registra sensores al conectar o mediante un método addSensor
-        List<String> aisladas = gestor.detectarEstacionesAisladas();
-        assertNotNull(aisladas);
+
+        assertEquals(List.of("S2"), gestor.obtenerVecinos("S1"));
+        assertEquals(List.of("S1"), gestor.obtenerVecinos("S2"));
     }
 
     @Test
-    void testBufferIngesta_DebeProcesarEnOrden() {
-        LecturaSensor l1 = new LecturaSensor("S1", "T1", 10.0, 20.0, 30.0);
-        LecturaSensor l2 = new LecturaSensor("S2", "T2", 15.0, 25.0, 35.0);
+    void topologiaDetectaEstacionesAisladasRegistradas() {
+        gestor.registrarSensor("S3");
+        gestor.registrarConexion("S1", "S2");
 
-        gestor.recibirLectura(l1);
-        gestor.recibirLectura(l2);
-
-        assertEquals(l1, gestor.procesarSiguienteLectura());
-        assertEquals(l2, gestor.procesarSiguienteLectura());
+        assertEquals(List.of("S3"), gestor.detectarEstacionesAisladas());
     }
 
     @Test
-    void testOptimizarHistorial_DebeLimitarTamaño() {
-        for(int i=0; i<100; i++) gestor.agregarEvento("Evento " + i);
-        gestor.limpiarHistorialAntiguo(10);
-        assertEquals(10, gestor.obtenerEventosRecientes(100).size());
+    void bufferProcesaLecturasEnOrdenFifo() {
+        LecturaSensor primera = new LecturaSensor("S1", "2026-01-01 10:00", 10, 20, 30);
+        LecturaSensor segunda = new LecturaSensor("S2", "2026-01-01 10:01", 15, 25, 35);
+
+        gestor.recibirLectura(primera);
+        gestor.recibirLectura(segunda);
+
+        assertSame(primera, gestor.procesarSiguienteLectura());
+        assertSame(segunda, gestor.procesarSiguienteLectura());
+        assertNull(gestor.procesarSiguienteLectura());
+    }
+
+    @Test
+    void filtrarAlertasCriticasNoEliminaLecturasDelBuffer() {
+        LecturaSensor normal = new LecturaSensor("S1", "2026-01-01 10:00", 10, 20, 15);
+        LecturaSensor critica = new LecturaSensor("S2", "2026-01-01 10:01", 15, 25, 45);
+
+        gestor.recibirLectura(normal);
+        gestor.recibirLectura(critica);
+
+        assertEquals(List.of(critica), gestor.filtrarAlertasCriticas(30));
+        assertSame(normal, gestor.procesarSiguienteLectura());
     }
 }
