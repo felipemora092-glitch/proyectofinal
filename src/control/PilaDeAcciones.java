@@ -38,10 +38,17 @@ public class PilaDeAcciones {
      * Apila una accion del operador.
      */
     public void apilar(String accion) {
-        if (tope == CAPACIDAD) {
-            System.out.println("   (historial lleno, se descarta la accion mas antigua)");
-            return;
+        if (accion == null || accion.isBlank()) {
+            throw new IllegalArgumentException("La acción no puede estar vacía");
         }
+
+        if (tope == CAPACIDAD) {
+            // Se elimina la acción más antigua para conservar las 100 recientes.
+            System.arraycopy(acciones, 1, acciones, 0, CAPACIDAD - 1);
+            acciones[CAPACIDAD - 1] = null;
+            tope--;
+        }
+
         acciones[tope] = accion;
         tope++;
     }
