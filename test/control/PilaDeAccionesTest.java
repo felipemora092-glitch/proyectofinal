@@ -29,7 +29,7 @@ class PilaDeAccionesTest {
         assertEquals(100, pila.tamano());
         assertEquals("Accion 100", pila.desapilar());
         assertEquals("Accion 99", pila.desapilar());
-        assertEquals("Accion 1", pila.cima());
+        assertEquals("Accion 98", pila.cima());
     }
 
     @Test
