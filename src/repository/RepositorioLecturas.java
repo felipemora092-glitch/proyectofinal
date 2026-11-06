@@ -36,6 +36,9 @@ public class RepositorioLecturas {
      * @return true si se agrego, false si no habia espacio
      */
     public boolean agregar(LecturaSensor lectura) {
+        if (lectura == null) {
+            throw new IllegalArgumentException("La lectura no puede ser null");
+        }
         if (cantidad == lecturas.length) {
             redimensionar();
         }
@@ -65,7 +68,7 @@ public class RepositorioLecturas {
     /**
      * Elimina la lectura de la posicion indicada.
      *
-     * VERSION INGENUA: revisala con cuidado antes de confiar en ella.
+     * Desplaza los elementos posteriores y libera la última posición ocupada.
      */
     public void eliminar(int posicion) {
         if (posicion < 0 || posicion >= cantidad) {
@@ -82,7 +85,7 @@ public class RepositorioLecturas {
 
     /**
      * Busca la primera lectura de una estacion.
-     * TODO 1: implementar. Devolver null si no existe.
+     * Devuelve null si no existe.
      */
     public LecturaSensor buscarPorEstacion(String idSensor) {
         for (int i = 0; i < cantidad; i++) {
@@ -96,7 +99,7 @@ public class RepositorioLecturas {
 
     /**
      * Reemplaza la lectura de una posicion por otra.
-     * TODO 2: implementar, verificando que la posicion sea valida.
+     * Verifica que la posición sea válida y que la nueva lectura no sea null.
      */
     public void actualizar(int posicion, LecturaSensor nueva) {
         if (posicion < 0 || posicion >= cantidad) {
@@ -112,11 +115,8 @@ public class RepositorioLecturas {
     /**
      * Duplica la capacidad interna del arreglo conservando el contenido.
      *
-     * TODO 3: implementar. Despues llamalo desde agregar() cuando
-     * el arreglo se llene, para que el repositorio deje de tener techo.
-     *
-     * Pista: no puedes "estirar" un arreglo en Java. Tienes que crear
-     * uno nuevo mas grande y copiar. Piensa cuantas copias implica eso.
+     * Duplica la capacidad interna y conserva todas las lecturas existentes.
+     * Se invoca automáticamente desde agregar() cuando el arreglo se llena.
      */
     private void redimensionar() {
         LecturaSensor[] nuevo = new LecturaSensor[lecturas.length * 2];
@@ -130,8 +130,7 @@ public class RepositorioLecturas {
     /**
      * Promedio de PM2.5 de todas las lecturas almacenadas.
      *
-     * TODO 4: revisar. Este metodo asume algo que puede no ser cierto
-     * despues de que alguien llame a eliminar().
+     * Calcula el promedio usando únicamente las posiciones ocupadas.
      */
     public double promedioPm25() {
         double suma = 0;
