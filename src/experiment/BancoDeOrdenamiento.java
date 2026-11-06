@@ -131,7 +131,7 @@ public class BancoDeOrdenamiento {
 
     // ---------- EXPERIMENTO 4 ----------
 
-    /** QuickSort con pivote fijo: primero con datos desordenados, luego con datos reales. */
+    /** Compara QuickSort con pivote aleatorio sobre datos desordenados y ordenados. */
     private static void experimentoCuatro() {
         System.out.println("=== EXP 4: QUICKSORT CON PIVOTE ALEATORIO ===");
 
