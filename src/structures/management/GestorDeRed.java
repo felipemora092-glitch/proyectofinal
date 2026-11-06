@@ -96,21 +96,16 @@ public class GestorDeRed {
     // =========================================================================
 
     /**
-     * Agrega una alerta y la deja seleccionada como alerta actual.
+     * Agrega una alerta al historial. La primera alerta queda seleccionada;
+     * las siguientes se agregan al final sin cambiar la posición actual.
      */
     public void registrarAlerta(String alerta) {
         validarTexto(alerta, "La alerta");
 
         navegadorAlertas.addLast(alerta);
-
-        // Se rota la deque hasta dejar la alerta recién agregada al frente.
-        // Así el frente representa siempre la alerta actual.
-        int rotaciones = navegadorAlertas.size() - 1;
-        for (int i = 0; i < rotaciones; i++) {
-            navegadorAlertas.addLast(navegadorAlertas.removeFirst());
+        if (alertaActual == null) {
+            alertaActual = navegadorAlertas.peekFirst();
         }
-
-        alertaActual = navegadorAlertas.peekFirst();
     }
 
     /**
