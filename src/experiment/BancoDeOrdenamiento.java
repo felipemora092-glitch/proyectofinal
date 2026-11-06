@@ -133,26 +133,22 @@ public class BancoDeOrdenamiento {
 
     /** QuickSort con pivote fijo: primero con datos desordenados, luego con datos reales. */
     private static void experimentoCuatro() {
-        System.out.println("=== EXP 4: QUICKSORT CON PIVOTE = PRIMER ELEMENTO ===");
+        System.out.println("=== EXP 4: QUICKSORT CON PIVOTE ALEATORIO ===");
 
         System.out.println("-- Caso A: 50.000 lecturas DESORDENADAS --");
         LecturaSensor[] revueltas = desordenar(GeneradorDatos.generar(50_000));
         long t = System.currentTimeMillis();
-        Ordenador.quickSortPivotePrimero(revueltas);
+        Ordenador.quickSortPivoteAleatorio(revueltas);
         reportar("QuickSort", System.currentTimeMillis() - t);
 
         System.out.println();
         System.out.println("-- Caso B: 50.000 lecturas EN ORDEN CRONOLOGICO (como llegan de la red) --");
         LecturaSensor[] enOrden = GeneradorDatos.generar(50_000);
-        try {
-            t = System.currentTimeMillis();
-            Ordenador.quickSortPivotePrimero(enOrden);
-            reportar("QuickSort", System.currentTimeMillis() - t);
-        } catch (StackOverflowError e) {
-            System.out.println("QuickSort      -> StackOverflowError: el programa se quedo sin pila.");
-            System.out.println("                  Comparaciones alcanzadas antes de morir: "
-                    + String.format("%,d", Ordenador.getComparaciones()));
-        }
+        t = System.currentTimeMillis();
+        Ordenador.quickSortPivoteAleatorio(enOrden);
+        reportar("QuickSort", System.currentTimeMillis() - t);
+        System.out.println("   Arreglo ordenado correctamente: "
+                + Ordenador.estaOrdenadoPorTimestamp(enOrden));
         System.out.println();
     }
 
